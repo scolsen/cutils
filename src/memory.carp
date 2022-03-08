@@ -1,0 +1,41 @@
+(Unsafe.preproc (Unsafe.emit-c "int permit_allocations = 1;"))
+
+(Unsafe.preproc (Unsafe.emit-c "void* conditional_malloc(size_t size) {
+  if(permit_allocations) { 
+    #ifdef LOG_MEMORY
+    return logged_malloc(size);
+    #else 
+    #ifdef CHECK_ALLOCATIONS
+    void* res = malloc(size) 
+    if (!res) abort();
+    return res;
+    #else
+    return malloc(size); 
+    #endif
+    #endif
+  } else {
+    printf(\"error: allocation performed!\");
+    exit();
+  } 
+}"))
+
+(Unsafe.preproc (Unsafe.emit-c "#undef CARP_MALLOC"))
+(Unsafe.preproc
+  (Unsafe.emit-c " #define CARP_MALLOC(size) conditional_malloc(size)"))
+  
+(deftemplate set-permit-allocations (Fn [Bool] ())
+  "void $NAME(int t)"
+  "$DECL { permit_allocations = t; }")
+(register permit-allocations Bool "permit_allocations")
+
+(doc Memory
+  "Defines routines for verifying memory-related behaviors.")
+(defmodule Memory
+  (doc exit-alloc!
+    ("Verifies the closure passed to this function allocates no " false)
+    "memory. Exits if memory is allocated.")
+  (defn exit-alloc! [f]
+    (do (set-permit-allocations false)
+        (~f)
+        (set-permit-allocations true)))
+)

@@ -1,0 +1,21 @@
+(load "pointer.carp")
+
+(defmodule Ref
+  (doc endo-map
+    "Maps a function over a reference's contained value."
+    ""
+    "The function must preserve the value's type. To apply a function that
+    doesn't preserve the value's type, see Pointer.ref-map")
+  (sig endo-map (Fn [(Ref (Fn [b] b)) (Ref a q)] (Ref a q)))
+  (defn endo-map [f r]
+    (to-ref (Pointer.endo-map f (address r))))
+
+  (doc unsafe-map
+   "Maps a function over a refrence's contained value, potentially changing its
+    type without copying."
+    ""
+    "Note: This function performs type coercion and is unsafe.")
+  (sig unsafe-map (Fn [(Ref (Fn [a] b)) (Ref a q)] (Ref b q)))
+  (defn unsafe-map [f r]
+    (to-ref (Pointer.unsafe-map f (address r))))
+)

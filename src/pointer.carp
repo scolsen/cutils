@@ -1,0 +1,31 @@
+(defmodule Pointer
+  (doc endo-map
+    "Maps a function over a pointer's contained value."
+    ""
+    "The function must preserve the value's type. To apply a function that
+    doesn't preserve the value's type, see Pointer.map")
+  (defn endo-map [f p]
+    (do (Pointer.set p (~f (Pointer.to-value p)))
+        p))
+
+  (doc unsafe-map!
+    "Maps a function over a pointer's contained value, potentially changing its
+    type without copying."
+    ""
+    "Note: This function performs type coercion and is unsafe.")
+  (sig unsafe-map! (Fn [(Ref (Fn [a] b)) (Ptr a)] (Ptr b)))
+  (defn unsafe-map! [f p]
+    (do (Pointer.unsafe-set p (~f (Pointer.to-value p)))
+        (Unsafe.coerce p)))
+
+  (doc copy-map
+    "Maps a function over a pointer's contained value, potentially changing its
+    type. This function performs a copy."
+    ""
+    "Note that the refernece to the input pointer will be lost if not retained
+    outside of this function.")
+  (sig copy-map (Fn [&(Fn [a] b) (Ptr a)] (Ptr b)))
+  (defn copy-map [f p]
+    (let [v (~f (Pointer.to-value p))]
+      (address &v)))
+)

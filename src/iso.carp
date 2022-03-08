@@ -1,0 +1,116 @@
+(load "cast.carp")
+(load "pointer.carp")
+(load "ref.carp")
+
+(doc Iso 
+  "Defines utilites for defining types that are isomorphic to an existing C type."
+  ""
+  "Only types that have a corresponding cast are supported.")
+(defmodule Iso
+
+  (defndynamic stringer [t cast-fn]
+    `(do (sig str (Fn [%t] String))
+         (defn str [x] (str (%cast-fn x)))
+         (implements str str)
+         (sig ref-str (Fn [&%t] String))
+         (defn ref-str [x] (str @x))
+         (implements str ref-str)))
+
+  (defmacro stringable [t cast-fn]
+    (eval (list 'defmodule t
+            (Iso.stringer t cast-fn))))
+
+  (defndynamic initer [t i]
+    `(do (sig init (Fn [%i] %t))
+         (defn init [v] (the %t (Unsafe.coerce v)))))
+
+  (defmacro constructible [t i]
+    (eval (list 'defmodule t
+            (Iso.initer t i))))
+
+  (defndynamic copier [t num-cast]
+    `(do (sig copy (Fn [&%t] %t))
+         (defn copy [a] (the %t (Unsafe.coerce @(Ref.unsafe-map &%num-cast a))))
+         (implements copy copy)))
+
+  (defmacro copyable [t cast-fn]
+    (eval (list 'defmodule t
+            (Iso.copier t cast-fn))))
+
+  ;; NOTE: We can't use `cast` in the macros below since there are issues with
+  ;; macro expansion in macro bodies.
+  (defndynamic z-op [t num-cast]
+    `(do (sig zero (Fn [] %t))
+         (defn zero [] (the %t (Unsafe.coerce (%num-cast 0))))
+         (implements zero zero)))
+
+  (defndynamic bin-op [op t num-cast]
+    `(do (sig %op (Fn [%t %t] %t))
+         (defn %op [a b]
+           (the %t (Unsafe.coerce (%op (%num-cast a) (%num-cast b)))))
+         (implements %op %op)))
+
+  (defmacro numeric [t cast-fn]
+    (eval (list 'defmodule t
+            (Iso.z-op t cast-fn)
+            (Iso.bin-op '+ t cast-fn)
+            (Iso.bin-op '- t cast-fn)
+            (Iso.bin-op '* t cast-fn)
+            (Iso.bin-op '/ t cast-fn))))
+  
+  (defndynamic cmp [op t cast-fn]
+    `(do (sig %op (Fn [%t %t] Bool)) 
+         (defn %op [a b] (%op (%cast-fn a) (%cast-fn b)))
+         (implements %op %op)))
+
+  (defmacro comparable [t cast-fn]
+    (eval (list 'defmodule t
+            (Iso.cmp '> t cast-fn)
+            (Iso.cmp '< t cast-fn)
+            (Iso.cmp '= t cast-fn))))
+
+  (doc register-isonumeric 
+    "Registers an existing C typedef that is isomorphic to a numeric type,
+    deriving operations on it."
+    ""
+    "For example:" 
+    ""
+    "  (register-isonumeric Foo Uint32 uint32)"
+    ""
+    ("will register a C typedef Foo that behvaes exactly like Uint32" false)
+    "when operations are performed on it."
+    ("Automatically derives all the operations on the target type " false)
+    "by casting to the isomorphic type.")
+  (defmacro register-isonumeric [t i cast-fn]
+    (do (eval (list 'register-type t))
+        (eval (list 'defmodule t
+          (Iso.initer t i)
+          (Iso.copier t cast-fn)
+          (Iso.stringer t cast-fn)
+          (Iso.z-op t cast-fn)
+          (Iso.bin-op '+ t cast-fn)
+          (Iso.bin-op '- t cast-fn)
+          (Iso.bin-op '* t cast-fn)
+          (Iso.bin-op '/ t cast-fn)
+          (Iso.cmp '> t cast-fn)
+          (Iso.cmp '< t cast-fn)
+          (Iso.cmp '= t cast-fn)))))
+
+  (defmacro def-isonumeric [t i cast-fn]
+    (do (eval (Unsafe.preproc (Unsafe.emit-c (String.concat ["typedef " (str i)
+    " " (str t)
+    ";"]))))
+        (eval (list 'register-type t))
+        (eval (list 'defmodule t
+          (Iso.initer t i)
+          (Iso.copier t cast-fn)
+          (Iso.stringer t cast-fn)
+          (Iso.z-op t cast-fn)
+          (Iso.bin-op '+ t cast-fn)
+          (Iso.bin-op '- t cast-fn)
+          (Iso.bin-op '* t cast-fn)
+          (Iso.bin-op '/ t cast-fn)
+          (Iso.cmp '> t cast-fn)
+          (Iso.cmp '< t cast-fn)
+          (Iso.cmp '= t cast-fn)))))
+)

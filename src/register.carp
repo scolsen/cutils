@@ -1,0 +1,10 @@
+(defmodule Register
+  (doc register-enum
+    ("Registers a C enum as a type and module with " false)
+    "definitions that map to the enum's fields.")
+  (defmacro register-enum [ty override prefix :rest forms]
+    (cons-last (append (list 'defmodule ty)
+                         (map (fn [x] (list 'register x ty (Dynamic.String.concat
+                         [prefix (str x)]))) forms))
+                 (list 'do (list 'register-type ty override))))
+)

@@ -1,0 +1,53 @@
+(doc Cast
+  "The Cast module defines utilities for performing type conversions.")
+(defmodule Cast
+  (doc cast
+    ("Shorthand for unsafe coercion followed by a type annotation to " false)
+    "force Carp's type system to view a value as a value of a certain type.")
+  (defmacro cast [t x]
+    `(the %t (Unsafe.coerce %x)))
+
+  (doc int "Casts a value to type Int.")
+  (defn int [x]
+    (the Int (Unsafe.coerce x)))
+
+  (doc float "Casts a value to type Float.")
+  (defn float [x]
+    (the Float (Unsafe.coerce x)))
+
+  (doc double "Casts a value to type Double.")
+  (defn double [x]
+    (the Double (Unsafe.coerce x)))
+
+  (doc int8 "Casts a value to type Int8.")
+  (defn int8 [x]
+    (the Int8 (Unsafe.coerce x)))
+
+  (doc int16 "Casts a value to type Int16.")
+  (defn int16 [x]
+    (the Int16 (Unsafe.coerce x)))
+
+  (doc int32 "Casts a value to type Int32.")
+  (defn int32 [x]
+    (the Int32 (Unsafe.coerce x)))
+
+  (doc int64 "Casts a value to type Int64.")
+  (defn int64 [x]
+    (the Int64 (Unsafe.coerce x)))
+
+  (doc uint8 "Casts a value to type Uint8.")
+  (defn uint8 [x]
+    (the Uint8 (Unsafe.coerce x)))
+
+  (doc uint16 "Casts a value to type Uint16.")
+  (defn uint16 [x]
+    (the Uint16 (Unsafe.coerce x)))
+
+  (doc uint32 "Casts a value to type Uint32.")
+  (defn uint32 [x]
+    (the Uint32 (Unsafe.coerce x)))
+
+  (doc uint64 "Casts a value to type Uint64.")
+  (defn uint64 [x]
+    (the Uint64 (Unsafe.coerce x)))
+)

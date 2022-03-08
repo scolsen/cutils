@@ -1,0 +1,18 @@
+(defmodule Array
+  (doc unsafe-from-pointer 
+    "Returns an array from a given pointer and length argument."
+    ""
+    ("This funciton is particularly unsafe since it relies directly on " false)
+    ("Carp's current Array representation. It will break as soon " false)
+    "as an alternative is used.")
+  (deftemplate unsafe-from-pointer (Fn [(Ptr t) Int] (Array t))
+    "Array $NAME($t* ptr, int len)"
+    "$DECL {
+      Array a;
+      a.len = len;
+      a.capacity = len;
+      a.data = ptr;
+
+      return a;
+    }")
+)
